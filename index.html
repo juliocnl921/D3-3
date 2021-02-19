@@ -18,92 +18,14 @@
 	
   <div class="container mt-4">
   
-  <div class="row">
-      <div class="col md-3"> 
-        <h3> 
-          Resumen
-        </h3>
-        <div class="resumen"> 
-          En Sinaloa, en el año 2016, en Hospital Civil de Culiacán se instaló y posteriormente se puso en funcionamiento una planta generadora de oxígeno que permite un flujo de abastecimiento de oxígeno directo, seguro y constante en todos los pabellones médicos de dicho nosocomio. Ahora, 4 años después, se vio la necesidad de analizar diferentes aspectos relacionados con la viabilidad de tal proyecto, que ayudarán a los directivos en la toma de decisiones relacionadas al futuro del mismo. Debido a que la cantidad de datos recolectados y aspectos a analizar es muy amplia, el objetivo de este documento es explicar los efectos de la pandemia actual (COVID) relacionados al consumo de oxígeno del hospital civil de Culiacán. Entonces,  se pretende crear una gráfica que permita contestar las siguientes preguntas:
-          <br><br>
-          ¿Existe una relación entre la producción de oxígeno y el inicio de la pandemia?
-          <br>
-          ¿Si existe tal relación, que aspectos económicos, políticos y/o sociales podrían explicar el comportamiento de los datos?
-          <br><br>
-          Tomando como evidencia la información mostrada por la gráfica 1, se puede contestar con un “Si” la primera pregunta. Y como respuesta a la segunda pregunta, se tienen los siguientes aspectos:
-          <br><br>
-          1.- El primer aspecto social a considerar es el inicio aproximado en la atención a pacientes (en Hospital Civil de Culiacán) con problemas respiratorios presuntamente ocasionados por el virus Sars Cov-2, que fue a inicios de Abril del 2020,  y que corresponde a un incremento en el consumo de oxígeno.
-          <br>
-          2.- El segundo aspecto evidente es la alta dispersión entre los datos desde el inicio de la pandemia en Sinaloa, que posiblemente fue ocasionada por el anuncio público de que Hospital Civil de Culiacán sería exclusivamente para pacientes COVID [1] y la consecuente disminución en la atención a pacientes no COVID.
-          <br>
-          3.- El tercer aspecto a considerar fue el cambio de color en el semáforo COVID para el estado de Sinaloa, que corresponde a Septiembre del 2020 [2], que en términos de demanda de oxígeno se traduce a una disminución en el consumo y también en disminución en la dispersión de los datos.
-          <br><br><br>
-        </div>
-      </div>
-    </div>
-	<div class="row">
-      <div class="col md-3">  
-        <h3> 
-          Resultados
-        </h3>
-		<br><br><br>
-      </div>
-    </div>
-  
-    <div class="row">
-      <div class="col md-3">  
-        <div> 
-          <input type="checkbox" id="tendencia" checked='checked' onchange="actualizar()">&nbspMostrar línea de tendencia</label>
-        </div>
-      </div>
-    </div>
 
-    <div class="row">
-      <div class="col col-md-auto">  
-        <div>      
-          <label for="radio">Radio:</label>
-        </div>
-      </div>
-      <div class="col md-3">  
-        <div>      
-          <input type="range" min="1" max="10" value="3" id="radio"   onchange="actualizar()" class="slider"/>
-        </div>
-      </div>
-    </div>
-
-    <div class="row">
-      <div class="col col-md-auto">  
-        <div> 
-          <label for="limite">Límite:</label>
-        </div>
-      </div>
-      <div class="col md-3">  
-        <div> 
-          <input type="range" min="1" max="10" value="3" id="limite"  onchange="actualizar()" class="slider"/>   
-        </div>
-      </div>
-    </div>
 
     <div class="row">   
       <div class="col md-3">
         <div id="graf" class="vizprev"></div>
       </div>
     </div>
-	
-	 <div class="row">
-      <div class="col md-3"> 
-        <h3> 
-          <br><br>
-          Referencias
-        </h3>
-        <div > 
-          [1] Ibarra, A. (2020). Hospital Civil de Culiacán primero en convertirse a Covid-19. Retrieved 2 December 2020, from https://riodoce.mx/2020/04/08/hospital-civil-de-culiacan-primero-en-convertirse-a-covid-1
-          <br><br>
-          [2] Coronavirus en Sinaloa: 11 de 18 municipios están en semáforo verde. (2020). Retrieved 2 December 2020, from https://www.infobae.com/america/mexico/2020/09/25/coronavirus-en-sinaloa-11-de-18-municipios-estan-en-semaforo-verde/
-        </div>
-      </div>
-    </div>
-	
+
   </div>
 
   <script src="d3.js"></script>
