@@ -18,7 +18,30 @@
 	
   <div class="container mt-4">
   
-
+    <div class="row">
+      <div class="col col-md-auto">  
+        <div>      
+          <label for="radio">Radio:</label>
+        </div>
+      </div>
+      <div class="col md-3">  
+        <div>      
+          <label for="indicadores">Indicadores:</label>
+          <select id="indicadores" onchange="actualizar()">         
+            <option value="superficie" selected >Superficie (2015)</option>
+            <option value="poblacion">Poblacion (2015)</option>
+            <option value="densidad">Desidad (2015)</option>
+            <option value="IDH">IDH ( 2019)</option>
+            <option value="esperanza_vida">Esperanza de vida al nacer (2019)</option>
+            <option value="tasa_obesidad">Tasa de obesidad(2018)</option>
+            <option value="poblacion_trabajando">Población ocupada trabajando más de 48 horas(2019)</option>
+            <option value="ingreso_mensual">Ingreso equivalente disponible de los hogares (2018)</option>
+            <option value="incidencia_delictiva">Tasa de incidencia delictiva(2018)</option>
+            <option value="contaminacion_aire">Contaminación del aire(PM.25) (2019)</option>
+          </select>
+        </div>
+      </div>
+    </div>
 
     <div class="row">   
       <div class="col md-3">
