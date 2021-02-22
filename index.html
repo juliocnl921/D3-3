@@ -16,15 +16,9 @@
     <div>Herramientas de Visualización</div>
   </nav>
 	
-  <div class="container mt-4">
-  
+  <div class="container mt-4">  
     <div class="row">
       <div class="col col-md-auto">  
-        <div>      
-          <label for="radio">Radio:</label>
-        </div>
-      </div>
-      <div class="col md-3">  
         <div>      
           <label for="indicadores">Indicadores:</label>
           <select id="indicadores" onchange="actualizar()">         
@@ -45,7 +39,10 @@
 
     <div class="row">   
       <div class="col md-3">
-        <div id="graf" class="vizprev"></div>
+        <div id="grafMapa" class="vizprev"></div>
+      </div>
+      <div class="col md-3">
+        <div id="grafBarras" class="vizprev"></div>
       </div>
     </div>
 
