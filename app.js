@@ -25,6 +25,7 @@ svg = graf.append('svg')
           .style('height', `${ alto_total }px`);
 
 dataArray = []
+g_estados = []
 
 function agregar_grupo(){
   g = svg.append('g')
@@ -32,6 +33,9 @@ function agregar_grupo(){
          .style('width', ancho + 'px')
          .style('height', alto + 'px');
   return g;
+}
+function generar_g_estados(){
+  dataArray.forEach(estado => g_estados.push({indice:estado.indice, g:agregar_grupo()}));
 }
 
 //    3.2  funciones para ajustar los datos de entrada a la representacion de salida
@@ -52,10 +56,12 @@ function preprocesar(data) {
   fx = dominio(d3.scaleTime()  ,min_x,max_x,0,ancho)  
 
   for (i=0; i < data.length; i+=1) {
+    data[i].indice = i;
     for (j=0; j < data[i].coordenadas.length; j+=1) {
       data[i].coordenadas[j][0] = fx(data[i].coordenadas[j][0])
       data[i].coordenadas[j][1] = alto-fy(data[i].coordenadas[j][1])
     }
+    data[i].coordenadas = [data[i].coordenadas];
   }
   
   return data;
@@ -63,32 +69,45 @@ function preprocesar(data) {
 
 //  3.3  funciones para dibujar los diferentes grupos de componentes
 function render() {
-  data = dataArray
-  dibujarMapa(data)
+  data = dataArray;
+  dibujarMapa(data);
 }
 
 function dibujarMapa(data){
-
   indicador  = document.getElementById('indicadores').value;
-  //alert(indicador);
-  minc = Math.min.apply(null, data.map((e) => e[indicador]))
-  maxc = Math.max.apply(null, data.map((e) => e[indicador]))
+
+  minc = Math.min.apply(null, data.map((e) => e[indicador]));
+  maxc = Math.max.apply(null, data.map((e) => e[indicador]));
 
   var fc = d3.scaleQuantize()
     .domain([minc,maxc])
     .range(["#65e800", "#e0e800", "#e8aa00", "#e85d00", "#e80000"]);
 
-  data.forEach(estado => dibujarArea(estado,fc(estado[indicador])));
+  data.forEach(estado => dibujarArea(estado,fc,indicador));
 }
-function dibujarArea(estado,color){
-  agregar_grupo().selectAll("polygon")
-    .data([estado.coordenadas])
-    .enter()
+function dibujarArea(estado,fc,indicador){
+  
+  g_estado = g_estados.find(g => g.indice == estado.indice);
+  
+  color = fc(estado[indicador]);
+
+  elementos = g_estado.g.selectAll('polygon').data(estado.coordenadas)
+
+  elementos.enter()
     .append("polygon")
     .attr("points",(d) => d)
     .attr("stroke", "black")
     .attr("fill", color)
-    .attr("stroke-width", 2);
+    .attr("stroke-width", 2)
+    .merge(elementos)
+    .transition()
+    .duration(d => 1000)
+    .attr("fill", color);
+
+  elementos.exit()
+    .transition()
+    .remove();
+  
 }
 
 // 4. Carga de datos
@@ -96,11 +115,11 @@ fetch('estados.json')
   .then(response => response.json())
   .then(data =>{
     dataArray = preprocesar(data);
-    render();
+    generar_g_estados();
+    actualizar();
   });
 
 function actualizar(){
   render();
-  //alert("sdfsdf");
 }
 
