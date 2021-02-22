@@ -1,4 +1,7 @@
 // 1. Configuración
+COLOR_BASE    = '#1960ad'
+COLOR_ESTADOS = ['#7fa7d1','#6695c8','#4c83bf','#3272b6','#1960ad','#004fa4','#004793','#003f83','#003772','#002f62']
+
 grafMapa = d3.select('#grafMapa')
 grafBarras = d3.select('#grafBarras')
 
@@ -9,24 +12,17 @@ grafMapa.style('width' , `${ ancho_total}px`).style('height', `${ alto_total }px
 grafBarras.style('width' , `${ ancho_total}px`).style('height', `${ alto_total }px`)
 
 margins = {  top:    ancho_total * 0.06 
-           , left:   ancho_total * 0.06
+           , left:   ancho_total * 0.10
            , right:  ancho_total * 0.06
            , bottom: ancho_total * 0.18 }
 
 ancho = ancho_total - margins.left -  margins.right
 alto  = alto_total  - margins.top  - margins.bottom
 
-function agregar_g(svg){
-  g = svg.append('g')
-    .style('transform', `translate(${margins.left}px, ${margins.top}px)`)
-    .style('width', ancho + 'px')
-    .style('height', alto + 'px');
-  return g;
-}
-
 // 2. Variables globales
 svgM =   grafMapa.append('svg').style('width', `${ ancho_total }px`).style('height', `${ alto_total }px`);
 svgB = grafBarras.append('svg').style('width', `${ ancho_total }px`).style('height', `${ alto_total }px`);
+
 dataArray = []
 g_estados = []
 g_barras  = null
@@ -40,9 +36,15 @@ fy_b = d3.scaleLinear()
 
 fx_b = d3.scaleBand()
   .range([0, ancho])
-  .paddingInner(0.1)
-  .paddingOuter(0.3) 
 
+ 
+function agregar_g(svg){
+  g = svg.append('g')
+    .style('transform', `translate(${margins.left}px, ${margins.top}px)`)
+    .style('width', ancho + 'px')
+    .style('height', alto + 'px');
+  return g;
+}
 function generar_g(){
   dataArray.forEach(estado => g_estados.push({indice:estado.indice, g:agregar_g(svgM)}));
   g_barras = agregar_g(svgB);
@@ -89,7 +91,7 @@ function dibujarMapa(data){
   min = Math.min.apply(null, data.map((e) => e[indicador]));
   max = Math.max.apply(null, data.map((e) => e[indicador]));
   
-  fc = d3.scaleOrdinal().domain([min,max]).range(["#65e800", "#e0e800", "#e8aa00", "#e85d00", "#e80000"])
+  fc = d3.scaleOrdinal().domain([min,max]).range(COLOR_ESTADOS)
 
   data.forEach(estado => dibujarArea(estado,fc,indicador));
 }
@@ -124,17 +126,19 @@ function dibujarBarras(data){
     .map(estado => [estado.nombre, estado[indicador]])
     .sort((a,b) => (a[1] < b[1]) ? 1 : ((b[1] < a[1]) ? -1 : 0));
 
-  fy_b.domain([min, max])
-  fx_b.domain(datos.map(d => d[0]))
-
   min = Math.min.apply(null, data.map((e) => e[indicador]));
   max = Math.max.apply(null, data.map((e) => e[indicador]));
+  ajuste = ((max-min)*0.1);
+  min = (min-ajuste)<0 ? 0: (min-ajuste);
+
+  fy_b.domain([min, max]);
+  fx_b.domain(datos.map(d => d[0]));
 
   elementos = g_barras.selectAll('rect').data(datos)
 
   elementos.enter()
     .append('rect')   
-    .style('fill', '#000')
+    .style('fill', COLOR_BASE)
     .style('x', (d,i) => fx_b(d[0]) + 'px')
     .style('y', d => fy_b(d[1])+'px')
     .style('width' , (5)+'px')
@@ -144,7 +148,7 @@ function dibujarBarras(data){
     .duration(2000)
     .style('x', (d,i) => fx_b(d[0]) + 'px')
     .style('y', d => fy_b(d[1])+'px')
-    .style('width' , (5)+'px')
+    .style('width' , fx_b.bandwidth()-2+'px')
     .style('height', d => (alto - fy_b(d[1])) + 'px')
 
   elementos.exit()
