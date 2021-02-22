@@ -16,12 +16,6 @@ margins = {  top:    ancho_total * 0.06
 ancho = ancho_total - margins.left -  margins.right
 alto  = alto_total  - margins.top  - margins.bottom
 
-// 2. Variables globales
-svgM =   grafMapa.append('svg').style('width', `${ ancho_total }px`).style('height', `${ alto_total }px`);
-svgB = grafBarras.append('svg').style('width', `${ ancho_total }px`).style('height', `${ alto_total }px`);
-dataArray = []
-grupos = []
-
 function agregar_g(svg){
   g = svg.append('g')
     .style('transform', `translate(${margins.left}px, ${margins.top}px)`)
@@ -29,24 +23,46 @@ function agregar_g(svg){
     .style('height', alto + 'px');
   return g;
 }
+
+// 2. Variables globales
+svgM =   grafMapa.append('svg').style('width', `${ ancho_total }px`).style('height', `${ alto_total }px`);
+svgB = grafBarras.append('svg').style('width', `${ ancho_total }px`).style('height', `${ alto_total }px`);
+dataArray = []
+g_estados = []
+g_barras  = null
+eje_x     = d3.axisBottom()
+eje_y     = d3.axisLeft()
+eje_x_g   = null
+eje_y_g   = null
+
+fy_b = d3.scaleLinear()
+  .range([alto, 0])
+
+fx_b = d3.scaleBand()
+  .range([0, ancho])
+  .paddingInner(0.1)
+  .paddingOuter(0.3) 
+
 function generar_g(){
-  dataArray.forEach(estado => grupos.push({indice:estado.indice, gM:agregar_g(svgM), gB:agregar_g(svgB)}));
+  dataArray.forEach(estado => g_estados.push({indice:estado.indice, g:agregar_g(svgM)}));
+  g_barras = agregar_g(svgB);
+  eje_x_g = g_barras.append('g')
+    .attr('transform', `translate(0, ${ alto })`)
+    .attr('class', 'eje')
+  eje_y_g = g_barras.append('g')
+    .attr('class', 'eje')
 }
 
 //    3.2  funciones para ajustar los datos de entrada a la representacion de salida
-function dominio(escala,minEntrada,maxEntrada, salida) {
-  f = escala.domain([minEntrada, maxEntrada]).range(salida)
-  return f
-}
 function preprocesar(data) {
-  //console.log(data)
+
   min_x = Math.min.apply(null, data.map((e) => Math.min.apply(null, e.coordenadas.map((p) => p[0]))))
   max_x = Math.max.apply(null, data.map((e) => Math.max.apply(null, e.coordenadas.map((p) => p[0]))))
   min_y = Math.min.apply(null, data.map((e) => Math.min.apply(null, e.coordenadas.map((p) => p[1]))))
   max_y = Math.max.apply(null, data.map((e) => Math.max.apply(null, e.coordenadas.map((p) => p[1]))))
 
-  fy = dominio(d3.scaleLinear(),min_y,max_y,[0, alto])
-  fx = dominio(d3.scaleTime()  ,min_x,max_x,[0,ancho])  
+  fy = d3.scaleLinear().domain([min_y,max_y]).range([0, alto])
+  fx = d3.scaleTime().domain([min_x,max_x]).range([0,ancho])
 
   for (i=0; i < data.length; i+=1) {
     data[i].indice = i;
@@ -72,18 +88,18 @@ function dibujarMapa(data){
 
   min = Math.min.apply(null, data.map((e) => e[indicador]));
   max = Math.max.apply(null, data.map((e) => e[indicador]));
-
-  fc = dominio(d3.scaleQuantize(),min,max,["#65e800", "#e0e800", "#e8aa00", "#e85d00", "#e80000"])
+  
+  fc = d3.scaleOrdinal().domain([min,max]).range(["#65e800", "#e0e800", "#e8aa00", "#e85d00", "#e80000"])
 
   data.forEach(estado => dibujarArea(estado,fc,indicador));
 }
 function dibujarArea(estado,fc,indicador){
   
-  grupo = grupos.find(g => g.indice == estado.indice);
+  g_estado = g_estados.find(g => g.indice == estado.indice);
   
   color = fc(estado[indicador]);
 
-  elementos = grupo.gM.selectAll('polygon').data(estado.coordenadas)
+  elementos = g_estado.g.selectAll('polygon').data(estado.coordenadas)
 
   elementos.enter()
     .append("polygon")
@@ -104,34 +120,55 @@ function dibujarArea(estado,fc,indicador){
 function dibujarBarras(data){
   indicador = document.getElementById('indicadores').value;
 
+  datos = data
+    .map(estado => [estado.nombre, estado[indicador]])
+    .sort((a,b) => (a[1] < b[1]) ? 1 : ((b[1] < a[1]) ? -1 : 0));
+
+  fy_b.domain([min, max])
+  fx_b.domain(datos.map(d => d[0]))
+
   min = Math.min.apply(null, data.map((e) => e[indicador]));
   max = Math.max.apply(null, data.map((e) => e[indicador]));
 
-  datos = data.map(estado => [estado.nombre,estado[indicador]]);
-  //falta ordenar datos
-  fx = dominio(d3.scaleLinear(),min,max,[[0,ancho]])
-
-  elementos = grupo.gB.selectAll('bar').data(datos)
+  elementos = g_barras.selectAll('rect').data(datos)
 
   elementos.enter()
-    .append("rect")
-    .style("fill", "steelblue")
-    .attr("x", function(e) { return 0; })
-    .attr("width", function(d) { return  20*fx(d[1]);} )
-    .attr("y", function(d,i) { return i*20; })
-    .attr("height", 15)
+    .append('rect')   
+    .style('fill', '#000')
+    .style('x', (d,i) => fx_b(d[0]) + 'px')
+    .style('y', d => fy_b(d[1])+'px')
+    .style('width' , (5)+'px')
+    .style('height', d => (alto - fy_b(d[1])) + 'px')
     .merge(elementos)
     .transition()
-    .duration(d => 1000)
-    .attr("fill", color);
+    .duration(2000)
+    .style('x', (d,i) => fx_b(d[0]) + 'px')
+    .style('y', d => fy_b(d[1])+'px')
+    .style('width' , (5)+'px')
+    .style('height', d => (alto - fy_b(d[1])) + 'px')
 
   elementos.exit()
     .transition()
-    .remove();
+    .remove()
 
+  yAxisCall = d3.axisLeft(fy_b)
+    
+  eje_y_g.transition()
+    .duration(2000)
+    .call(yAxisCall)
+
+  xAxisCall = d3.axisBottom(fx_b)
+  eje_x_g.transition()
+    .duration(2000)
+    .call(xAxisCall)
+    .selectAll('text')
+    .attr('x', '-8px')
+    .attr('y', '-5px')
+    .attr('text-anchor', 'end')
+    .attr('transform', 'rotate(-90)')
 }
 
-// 4. Carga de datos
+//--------------------------------------
 fetch('estados.json')
   .then(response => response.json())
   .then(data =>{
@@ -143,4 +180,3 @@ fetch('estados.json')
 function actualizar(){
   render();
 }
-
