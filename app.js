@@ -1,6 +1,8 @@
 // 1. Configuración
 COLOR_BASE    = '#1960ad'
-COLOR_ESTADOS = ['#7fa7d1','#6695c8','#4c83bf','#3272b6','#1960ad','#004fa4','#004793','#003f83','#003772','#002f62']
+COLOR_ESTADOS = ['#5395db','#001a36']
+COLOR_AXIS     = "#575757"
+DURACION       = 1000
 
 grafMapa = d3.select('#grafMapa')
 grafBarras = d3.select('#grafBarras')
@@ -23,36 +25,36 @@ alto  = alto_total  - margins.top  - margins.bottom
 svgM =   grafMapa.append('svg').style('width', `${ ancho_total }px`).style('height', `${ alto_total }px`);
 svgB = grafBarras.append('svg').style('width', `${ ancho_total }px`).style('height', `${ alto_total }px`);
 
-dataArray = []
-g_estados = []
-g_barras  = null
-eje_x     = d3.axisBottom()
-eje_y     = d3.axisLeft()
-eje_x_g   = null
-eje_y_g   = null
+dataArray = [];
+g_estados = [];
+g_barras  = null;
+label_y_g = null;
+eje_x     = d3.axisBottom();
+eje_y     = d3.axisLeft();
+eje_x_g   = null;
+eje_y_g   = null;
 
 fy_b = d3.scaleLinear()
-  .range([alto, 0])
+  .range([alto, 0]);
 
 fx_b = d3.scaleBand()
-  .range([0, ancho])
+  .range([0, ancho]);
 
  
-function agregar_g(svg){
-  g = svg.append('g')
-    .style('transform', `translate(${margins.left}px, ${margins.top}px)`)
+function agregar_g(padre,x,y){
+  g = padre.append('g')
+    .style('transform', `translate(${x}px, ${y}px)`)
     .style('width', ancho + 'px')
     .style('height', alto + 'px');
   return g;
 }
 function generar_g(){
-  dataArray.forEach(estado => g_estados.push({indice:estado.indice, g:agregar_g(svgM)}));
-  g_barras = agregar_g(svgB);
-  eje_x_g = g_barras.append('g')
-    .attr('transform', `translate(0, ${ alto })`)
-    .attr('class', 'eje')
-  eje_y_g = g_barras.append('g')
-    .attr('class', 'eje')
+  dataArray.forEach(estado => g_estados.push({indice:estado.indice, g:agregar_g(svgM,margins.left,margins.top)}));
+  g_barras = agregar_g(svgB,margins.left,margins.top);
+  eje_x_g =agregar_g(g_barras,0,alto);
+  eje_y_g = agregar_g(g_barras,0,0);
+  
+  label_y_g = agregar_g(svgB,0,margins.top);
 }
 
 //    3.2  funciones para ajustar los datos de entrada a la representacion de salida
@@ -91,7 +93,7 @@ function dibujarMapa(data){
   min = Math.min.apply(null, data.map((e) => e[indicador]));
   max = Math.max.apply(null, data.map((e) => e[indicador]));
   
-  fc = d3.scaleOrdinal().domain([min,max]).range(COLOR_ESTADOS)
+  fc = d3.scaleLinear().domain([min,max]).range(COLOR_ESTADOS)
 
   data.forEach(estado => dibujarArea(estado,fc,indicador));
 }
@@ -106,21 +108,22 @@ function dibujarArea(estado,fc,indicador){
   elementos.enter()
     .append("polygon")
     .attr("points",(d) => d)
-    .attr("stroke", "black")
+    .attr("stroke", "white")
     .attr("fill", color)
-    .attr("stroke-width", 2)
+    .attr("stroke-width", 0.3+'px')
     .merge(elementos)
     .transition()
-    .duration(d => 1000)
+    .duration(d => DURACION)
     .attr("fill", color);
 
-  elementos.exit()
-    .transition()
-    .remove();
+  elementos.exit().transition().remove()
   
 }
+
 function dibujarBarras(data){
-  indicador = document.getElementById('indicadores').value;
+  seleccion       = document.getElementById('indicadores');
+  indicador       = seleccion.value;
+  texto_indicador = seleccion.options[seleccion.selectedIndex].text;
 
   datos = data
     .map(estado => [estado.nombre, estado[indicador]])
@@ -145,31 +148,49 @@ function dibujarBarras(data){
     .style('height', d => (alto - fy_b(d[1])) + 'px')
     .merge(elementos)
     .transition()
-    .duration(2000)
+    .duration(DURACION)
     .style('x', (d,i) => fx_b(d[0]) + 'px')
     .style('y', d => fy_b(d[1])+'px')
     .style('width' , fx_b.bandwidth()-2+'px')
     .style('height', d => (alto - fy_b(d[1])) + 'px')
 
-  elementos.exit()
-    .transition()
-    .remove()
+  elementos.exit().transition().remove()
 
   yAxisCall = d3.axisLeft(fy_b)
     
   eje_y_g.transition()
-    .duration(2000)
+    .duration(DURACION)
     .call(yAxisCall)
 
   xAxisCall = d3.axisBottom(fx_b)
   eje_x_g.transition()
-    .duration(2000)
+    .duration(DURACION)
     .call(xAxisCall)
     .selectAll('text')
     .attr('x', '-8px')
     .attr('y', '-5px')
     .attr('text-anchor', 'end')
     .attr('transform', 'rotate(-90)')
+
+  texto = label_y_g.selectAll('text').data([texto_indicador])
+
+  texto.enter()
+      .append('text')
+      .attr('text-anchor', "middle")
+      .attr("font-weight","bold")
+      .attr("font-size","18")
+      .style("fill", COLOR_AXIS)
+      .text(d => d)
+      .attr("transform", "rotate(-90)")
+      .attr("y", 0.03*ancho)
+      .attr("x",-0.35*ancho)
+      .attr("font-size","15")
+      .merge(texto)
+      .transition()
+      .duration(DURACION)
+      .text(d => d);
+      
+  texto.exit().transition().remove()
 }
 
 //--------------------------------------

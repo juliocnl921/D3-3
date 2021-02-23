@@ -9,9 +9,6 @@
     height: auto;
 }
 
-.avatar {
-  height: 150px;
-}
 
 .imgproy {
   height: 75px;
@@ -21,4 +18,8 @@
 
 .vizprev {
   border: 1px solid #888;
+}
+
+select {
+  width: 100%;
 }
