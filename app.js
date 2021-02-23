@@ -1,3 +1,4 @@
+
 // 1. Configuración
 COLOR_BASE    = '#1960ad'
 COLOR_ESTADOS = ['#5395db','#001a36']
@@ -50,7 +51,7 @@ function generar_g(){
   g_barras  = agregar_g(svgB, 1.6*margins.left, margins.top);
   eje_x_g   = agregar_g(svgB, 1.6*margins.left, 0.15 * alto);
   eje_y_g   = agregar_g(svgB, 1.6*margins.left, margins.top);
-  label_y_g = agregar_g(svgB,0,margins.top);
+  label_y_g = agregar_g(svgB,0,0);
 }
 
 //    3.2  funciones para ajustar los datos de entrada a la representacion de salida
@@ -104,16 +105,29 @@ function dibujarArea(estado,fc,indicador){
   elementos.enter()
     .append("polygon")
     .attr("points",(d) => d)
-    .attr("stroke", "white")
+    .attr("id",estado.indice)
+    .attr("stroke","white")
     .attr("fill", color)
     .attr("stroke-width", 0.3+'px')
+    .on("mouseover", function() {
+      d3.select(this).attr("stroke-width", 2+'px')
+      d3.select(this).attr("stroke", "black")
+      svgM.selectAll("polygon").sort(function (a, b) { 
+        if (a.id != d.id) return -1;               
+        else return 1;                             
+      });
+    })
+    .on("mouseout", function(d,i) {
+      d3.select(this).attr("stroke-width", 0.3+'px')
+      d3.select(this).attr("stroke", "white")
+    })
     .merge(elementos)
     .transition()
     .duration(d => DURACION)
     .attr("fill", color);
 
   elementos.exit().transition().remove()
-  
+
 }
 
 function dibujarBarras(data){
@@ -154,39 +168,30 @@ function dibujarBarras(data){
   yAxisCall = d3.axisLeft(fy_b) 
   eje_y_g.transition()
     .duration(DURACION)
-    .call(yAxisCall)
+    .call(yAxisCall);
 
   xAxisCall = d3.axisTop(fx_b)
   eje_x_g.transition()
     .duration(DURACION)
-    .call(xAxisCall)
-    //.selectAll('text')
-    //.attr('x', '-8px')
-    //.attr('y', '-5px')
-    //.attr('text-anchor', 'end')
-    //.attr('transform', 'rotate(-90)')
-
-  /*
+    .call(xAxisCall);
+  
   texto = label_y_g.selectAll('text').data([texto_indicador])
 
   texto.enter()
-      .append('text')
-      .attr('text-anchor', "middle")
-      .attr("font-weight","bold")
-      .attr("font-size","18")
-      .style("fill", COLOR_AXIS)
-      .text(d => d)
-      .attr("transform", "rotate(-90)")
-      .attr("y", 0.03*ancho)
-      .attr("x",-0.35*ancho)
-      .attr("font-size","15")
-      .merge(texto)
-      .transition()
-      .duration(DURACION)
-      .text(d => d);
-      
+    .append('text')
+    .attr('text-anchor', "middle")
+    .attr("font-weight","bold")
+    .attr("font-size","18")
+    .style("fill", COLOR_AXIS)
+    .text(d => d)
+    .attr("y", 0.06*alto)
+    .attr("x",0.7*ancho)
+    .attr("font-size","15")
+    .merge(texto)
+    .transition()
+    .duration(DURACION)
+    .text(d => d);
   texto.exit().transition().remove()
-  */
 }
 
 //--------------------------------------
@@ -196,6 +201,9 @@ fetch('estados.json')
     dataArray = preprocesar(data);
     generar_g();
     actualizar();
+
+    
+
   });
 
 function actualizar(){
