@@ -4,9 +4,10 @@ COLOR_BASE    = '#1960ad'
 COLOR_ESTADOS = ['#5395db','#001a36']
 COLOR_AXIS     = "#575757"
 DURACION       = 1000
-
-grafMapa = d3.select('#grafMapa')
+DURACION_FAST  = 400
+grafMapa   = d3.select('#grafMapa')
 grafBarras = d3.select('#grafBarras')
+body       = d3.select('body')
 
 ancho_total = grafMapa.style('width').slice(0, -2)
 alto_total = ancho_total * 0.8
@@ -32,6 +33,14 @@ g_barras  = null;
 label_y_g = null;
 eje_x_g   = null;
 eje_y_g   = null;
+
+var tooltip = d3.select("body")
+.append("div")
+.attr("id", "mytooltip")
+.style("position", "absolute")
+.style("z-index", "10")
+.style("visibility", "hidden")
+.text("a simple tooltip");
 
 fy_b = d3.scaleBand()
   .range([alto, 0]);
@@ -85,20 +94,22 @@ function render() {
 }
 
 function dibujarMapa(data){
+
   indicador = document.getElementById('indicadores').value;
 
   min = Math.min.apply(null, data.map((e) => e[indicador]));
   max = Math.max.apply(null, data.map((e) => e[indicador]));
   
   fc = d3.scaleLinear().domain([min,max]).range(COLOR_ESTADOS)
-
+  
   data.forEach(estado => dibujarArea(estado,fc,indicador));
+  
 }
 function dibujarArea(estado,fc,indicador){
   
   g_estado = g_estados.find(g => g.indice == estado.indice);
-  
-  color = fc(estado[indicador]);
+  valor    = estado[indicador];
+  color    = fc(valor);
 
   elementos = g_estado.g.selectAll('polygon').data(estado.coordenadas)
 
@@ -108,23 +119,33 @@ function dibujarArea(estado,fc,indicador){
     .attr("id",estado.indice)
     .attr("stroke","white")
     .attr("fill", color)
+    .attr("color_base", color)
+    .attr("valor", valor)
     .attr("stroke-width", 0.3+'px')
-    .on("mouseover", function() {
-      d3.select(this).attr("stroke-width", 2+'px')
-      d3.select(this).attr("stroke", "black")
-      svgM.selectAll("polygon").sort(function (a, b) { 
-        if (a.id != d.id) return -1;               
-        else return 1;                             
-      });
+    .on("click", function (event) {
+      //var mouse = d3.mouse(this);
+      //alert(d3.pointer(event,svgM.node()));
     })
-    .on("mouseout", function(d,i) {
-      d3.select(this).attr("stroke-width", 0.3+'px')
-      d3.select(this).attr("stroke", "white")
+    .on("mouseover", function() {
+      d3.select(this).transition().duration(d => DURACION_FAST).attr("fill", COLOR_AXIS)   
+      valorx = d3.select(this).attr("valor")
+      d3.select("#mytooltip").style("visibility", "visible").text(valorx)//set text to it   
+    })
+    .on("mouseout", function() {
+      colorx = d3.select(this).attr("color_base")
+      d3.select(this).transition().duration(d => DURACION_FAST).attr("fill", colorx)      
+    })
+    .on("mousemove", function(event) {    
+      
+      xy = d3.pointer(event,body.node());
+      //tooltip.style("left", xy[0] + "px").style("top", xy[1] + "px")
     })
     .merge(elementos)
     .transition()
     .duration(d => DURACION)
-    .attr("fill", color);
+    .attr("fill", color)
+    .attr("color_base", color)
+    .attr("valor", valor);
 
   elementos.exit().transition().remove()
 
@@ -201,9 +222,6 @@ fetch('estados.json')
     dataArray = preprocesar(data);
     generar_g();
     actualizar();
-
-    
-
   });
 
 function actualizar(){
