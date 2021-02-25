@@ -8,6 +8,7 @@ DURACION_FAST  = 400
 grafMapa   = d3.select('#grafMapa')
 grafBarras = d3.select('#grafBarras')
 body       = d3.select('body')
+MARGEN_BARRAS = 2
 
 ancho_total = grafMapa.style('width').slice(0, -2)
 alto_total = ancho_total * 0.8
@@ -30,17 +31,21 @@ svgB = grafBarras.append('svg').style('width', `${ ancho_total }px`).style('heig
 dataArray = [];
 g_estados = [];
 g_barras  = null;
-label_y_g = null;
+label_y_barras_g = null;
+label_y_mapa_g   = null;
 eje_x_g   = null;
 eje_y_g   = null;
+
+tooltip = d3.select("#mytooltip")
+
 
 var tooltip = d3.select("body")
 .append("div")
 .attr("id", "mytooltip")
 .style("position", "absolute")
 .style("z-index", "10")
-.style("visibility", "hidden")
-.text("a simple tooltip");
+.style("visibility", "hidden");
+
 
 fy_b = d3.scaleBand()
   .range([alto, 0]);
@@ -60,7 +65,8 @@ function generar_g(){
   g_barras  = agregar_g(svgB, 1.6*margins.left, margins.top);
   eje_x_g   = agregar_g(svgB, 1.6*margins.left, 0.15 * alto);
   eje_y_g   = agregar_g(svgB, 1.6*margins.left, margins.top);
-  label_y_g = agregar_g(svgB,0,0);
+  label_y_barras_g = agregar_g(svgB,0,0);
+  label_y_mapa_g = agregar_g(svgM,0,0);
 }
 
 //    3.2  funciones para ajustar los datos de entrada a la representacion de salida
@@ -103,6 +109,8 @@ function dibujarMapa(data){
   fc = d3.scaleLinear().domain([min,max]).range(COLOR_ESTADOS)
   
   data.forEach(estado => dibujarArea(estado,fc,indicador));
+
+  dibujarLabel(label_y_mapa_g)
   
 }
 function dibujarArea(estado,fc,indicador){
@@ -110,7 +118,7 @@ function dibujarArea(estado,fc,indicador){
   g_estado = g_estados.find(g => g.indice == estado.indice);
   valor    = estado[indicador];
   color    = fc(valor);
-
+  nombre   = estado.nombre
   elementos = g_estado.g.selectAll('polygon').data(estado.coordenadas)
 
   elementos.enter()
@@ -121,52 +129,53 @@ function dibujarArea(estado,fc,indicador){
     .attr("fill", color)
     .attr("color_base", color)
     .attr("valor", valor)
+    .attr("nombre", nombre)
     .attr("stroke-width", 0.3+'px')
-    .on("click", function (event) {
-      //var mouse = d3.mouse(this);
-      //alert(d3.pointer(event,svgM.node()));
-    })
     .on("mouseover", function() {
       d3.select(this).transition().duration(d => DURACION_FAST).attr("fill", COLOR_AXIS)   
-      valorx = d3.select(this).attr("valor")
-      d3.select("#mytooltip").style("visibility", "visible").text(valorx)//set text to it   
+      console.log(d3.select(this).attr("nombre"))
+      mostrartooltip(d3.select(this),true) 
     })
     .on("mouseout", function() {
       colorx = d3.select(this).attr("color_base")
-      d3.select(this).transition().duration(d => DURACION_FAST).attr("fill", colorx)      
+      d3.select(this).transition().duration(d => DURACION_FAST).attr("fill", colorx)     
+      mostrartooltip(d3.select(this),false)
     })
     .on("mousemove", function(event) {    
-      
       xy = d3.pointer(event,body.node());
-      //tooltip.style("left", xy[0] + "px").style("top", xy[1] + "px")
+      tooltip.style("left", xy[0]+10 + "px").style("top", xy[1]+10 + "px")
     })
     .merge(elementos)
     .transition()
     .duration(d => DURACION)
     .attr("fill", color)
     .attr("color_base", color)
-    .attr("valor", valor);
+    .attr("valor", valor)
+    .attr("nombre", nombre);
 
   elementos.exit().transition().remove()
 
 }
 
 function dibujarBarras(data){
-  seleccion       = document.getElementById('indicadores');
-  indicador       = seleccion.value;
-  texto_indicador = seleccion.options[seleccion.selectedIndex].text;
-
+  indicador       = document.getElementById('indicadores').value;
+  
   datos = data
     .map(estado => [estado.nombre, estado[indicador]])
     .sort((a,b) => (a[1] > b[1]) ? 1 : ((b[1] > a[1]) ? -1 : 0));
 
   min = Math.min.apply(null, data.map((e) => e[indicador]));
   max = Math.max.apply(null, data.map((e) => e[indicador]));
+
+  
+ 
   ajuste = ((max-min)*0.1);
   min = (min-ajuste)<0 ? 0: (min-ajuste);
 
   fx_b.domain([min, max]);
   fy_b.domain(datos.map(d => d[0]));
+
+  alto_barra = (alto - (MARGEN_BARRAS*datos.length))/datos.length;
 
   elementos = g_barras.selectAll('rect').data(datos)
   elementos.enter()
@@ -181,8 +190,8 @@ function dibujarBarras(data){
     .duration(DURACION)
     .style('x', (d,i) => 0 + 'px')
     .style('y',     d => fy_b(d[0]) + 'px')
-    .style('width', d => fx_b(d[1])+  'px')
-    .style('height',8+ 'px')
+    .style('width', d => fx_b(d[1]) + 'px')
+    .style('height',alto_barra+ 'px')
   elementos.exit().transition().remove()
   
 
@@ -195,25 +204,36 @@ function dibujarBarras(data){
   eje_x_g.transition()
     .duration(DURACION)
     .call(xAxisCall);
-  
-  texto = label_y_g.selectAll('text').data([texto_indicador])
+ dibujarLabel(label_y_barras_g)
+}
+function mostrartooltip(area,mostrar){
+  label = area.attr("nombre")+": "+area.attr("valor")
+  if (mostrar) d3.select("#mytooltip").style("visibility", "visible").text(label)
+  else d3.select("#mytooltip").style("visibility", "hidden")
+}
+
+function dibujarLabel(padre){
+  seleccion = document.getElementById('indicadores');
+  texto_indicador = seleccion.options[seleccion.selectedIndex].text;
+  texto = padre.selectAll('text').data([texto_indicador])
 
   texto.enter()
-    .append('text')
-    .attr('text-anchor', "middle")
-    .attr("font-weight","bold")
-    .attr("font-size","18")
-    .style("fill", COLOR_AXIS)
-    .text(d => d)
-    .attr("y", 0.06*alto)
-    .attr("x",0.7*ancho)
-    .attr("font-size","15")
-    .merge(texto)
-    .transition()
-    .duration(DURACION)
-    .text(d => d);
+      .append('text')
+      .attr('text-anchor', "middle")
+      .attr("font-weight","bold")
+      .attr("font-size","18")
+      .style("fill", COLOR_AXIS)
+      .text(d => d)
+      .attr("y", 0.06*alto)
+      .attr("x",0.7*ancho)
+      .attr("font-size","15")
+      .merge(texto)
+      .transition()
+      .duration(DURACION)
+      .text(d => d);
   texto.exit().transition().remove()
 }
+
 
 //--------------------------------------
 fetch('estados.json')
